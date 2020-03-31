@@ -17,31 +17,6 @@ m_arima <- auto.arima(visitors$amount)
 m_ets <- ets(visitors$amount)
 m_tbats <- tbats(visitors$amount)
 
-ui <- fluidPage(
-  sidebarLayout(
-    sidebarPanel(
-      # Slider which affects forecast horizon
-      sliderInput("h", "Forecast horizon", min = 1, max = 120, value = 60)
-    ),
-    mainPanel(
-      tabsetPanel(
-        tabPanel("Graphs",
-                 # 2x2 grid of graphs
-                 fluidRow(
-                   column(6,
-                          plotOutput("p_arima")),
-                   column(6,
-                          plotOutput("p_ets")), #
-                   column(6,
-                          plotOutput("p_tbats")), #
-                   column(6,
-                          plotOutput("p_comb")))
-        )
-      )
-    )
-  )
-)
-
 server <- function(input, output, session){
   # ARIMA plot
   output$p_arima <- renderPlot({
@@ -71,7 +46,8 @@ server <- function(input, output, session){
       ylim(c(0.7e8, 3.5e8))
   })
   # Combination plot
-  output$p_comb <- renderPlot({
+  observeEvent(input$h, {output$p_comb <- renderPlot({
+    
     m_comb <- (f_arima$mean + f_ets$mean + f_tbats$mean) / 3
     
     # Make a tibble containing time, actuals and predictions for plotting
@@ -89,7 +65,6 @@ server <- function(input, output, session){
                           breaks = c("A", "P"),
                           values = c("black", "#00BFC4"))
   })
+  })
   
 }
-
-shinyApp(ui, server)
