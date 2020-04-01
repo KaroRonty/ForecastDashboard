@@ -1,3 +1,4 @@
+library(DT)
 library(shiny)
 library(dplyr)
 library(fable)
@@ -25,7 +26,9 @@ ui <- fluidPage(
                           plotlyOutput("p_tbats")), #
                    column(6,
                           plotlyOutput("p_comb")))
-        )
+                 ),
+        tabPanel("Accuracy metrics",
+                 DTOutput("metrics"))
       )
     )
   )

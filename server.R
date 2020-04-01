@@ -1,3 +1,4 @@
+library(DT)
 library(shiny)
 library(dplyr)
 library(fable)
@@ -21,6 +22,62 @@ n_obs <- length(visitors)
 m_arima <- auto.arima(visitors)
 m_ets <- ets(visitors)
 m_tbats <- tbats(visitors)
+
+# Splint into training and test sets using 70/30 split
+split_date <- df$dates[0.7 * nrow(df)]
+
+visitors_training <- window(visitors, end = c(year(split_date),
+                                              month(split_date)))
+
+visitors_test <- window(visitors, start = c(year(split_date + months(1)),
+                                            month(split_date + months(1))))
+
+# Make models using the training data
+c_arima <- auto.arima(visitors_training) %>%
+  forecast(h = length(visitors_test))
+
+c_ets <- ets(visitors_training) %>%
+  forecast(h = length(visitors_test))
+
+c_tbats <- tbats(visitors_training) %>%
+  forecast(h = length(visitors_test))
+
+c_combination <- (c_arima$mean + c_ets$mean + c_tbats$mean) / 3
+
+# Compute accuracies for both sets using the models
+a_arima <- c_arima %>% 
+  accuracy(visitors_test)
+
+a_ets <- c_ets %>% 
+  accuracy(visitors_test)
+
+a_tbats <- c_tbats %>% 
+  accuracy(visitors_test)
+
+a_combination <- c_combination %>%
+  accuracy(visitors_test)
+
+# Put the accuracy metrics into tibble
+accuracies <- a_arima %>% 
+  as_tibble() %>% 
+  mutate(Model = "ARIMA",
+         Set = c("Training", "Test")) %>% 
+  rbind(a_combination %>% 
+          as_tibble() %>% 
+          mutate(Model = "Combination",
+                 Set = c("Test"),
+                 MASE = NA)) %>% 
+  rbind(a_ets %>% 
+          as_tibble() %>% 
+          mutate(Model = "ETS",
+                 Set = c("Training", "Test"))) %>% 
+  rbind(a_tbats %>% 
+          as_tibble() %>% 
+          mutate(Model = "TBATS",
+                 Set = c("Training", "Test"))) %>% 
+  mutate_if(is.numeric, function(x) format(round(x, 3), nsmall = 3)) %>% 
+  select(Model, Set, everything(), -ME, -MAE, -MPE, -ACF1) %>% 
+  arrange(Set, Model)
 
 # Function for plotting interactive plots
 make_plots <- function(forecast = NULL,
@@ -104,5 +161,9 @@ server <- function(input, output, session){
   observeEvent(input$h, {output$p_comb <- renderPlotly({
     make_plots(combination = TRUE, h = input$h)
   })
+  })
+  # Accuracy metrics table
+  output$metrics <- renderDT({
+    accuracies
   })
 }
