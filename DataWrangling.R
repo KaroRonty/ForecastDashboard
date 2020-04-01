@@ -1,21 +1,12 @@
-library(data.table)
-library(dtplyr)
 library(dplyr)
+library(lubridate)
 
-options(scipen = 1e9)
+data <- read.csv("visitors.csv")
 
-data1 <- fread("train_1.csv")
-data2 <- fread("train_2.csv")
-
-data <- data1 %>%
-  lazy_dt() %>% 
-  full_join(data2) %>% 
-  select(-Page) %>% 
-  as_tibble()
-
-data_sums <- apply(data, 2, function(x) sum(x, na.rm = TRUE))
-
-df <- data.frame(dates = as.Date(names(data_sums)),
-                 visitors = data_sums)
+df <- data %>% 
+  group_by(Period) %>% 
+  summarise(visitors = sum(Total)) %>% 
+  mutate(dates = ymd(paste0(Period, "-01"))) %>% 
+  select(dates, visitors)
 
 # write.csv(df, "website_visitors.csv", row.names = FALSE)

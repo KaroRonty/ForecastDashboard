@@ -3,20 +3,24 @@ library(dplyr)
 library(fable)
 library(plotly)
 library(ggplot2)
-library(tsibble)
 library(forecast)
 library(lubridate)
 
 # Load the data and formate dates
-visitors <- read.csv("website_visitors.csv") %>% 
+df <- read.csv("website_visitors.csv") %>% 
   mutate(dates = ymd(dates)) %>% 
-  rename(amount = visitors) %>% 
-  as_tsibble(regular = FALSE)
+  rename(amount = visitors)
+
+visitors <- ts(df$amount,
+               start = c(year(min(df$dates)), month(min(df$dates))),
+               frequency = 12)
+
+n_obs <- length(visitors)
 
 # Make the models
-m_arima <- auto.arima(visitors$amount)
-m_ets <- ets(visitors$amount)
-m_tbats <- tbats(visitors$amount)
+m_arima <- auto.arima(visitors)
+m_ets <- ets(visitors)
+m_tbats <- tbats(visitors)
 
 # Function for plotting interactive plots
 make_plots <- function(forecast = NULL,
@@ -30,9 +34,12 @@ make_plots <- function(forecast = NULL,
     m_comb <- (f_arima$mean + f_ets$mean + f_tbats$mean) / 3
     
     # Make a tibble containing time, actuals and forecasts for plotting
-    d_comb <- tibble(Day = c(1:nrow(visitors), nrow(visitors) + 1:h),
-                     Data = c(visitors$amount, rep(NA, h)),
-                     Forecast = c(rep(NA, nrow(visitors)), m_comb))
+    d_comb <- tibble(Day = c(df$dates,
+                             seq.Date(last(df$dates) + months(1),
+                                      to = last(df$dates) + months(h),
+                                      by = "months")),
+                     Data = c(as.numeric(visitors), rep(NA, h)),
+                     Forecast = c(rep(NA, n_obs), m_comb))
     
     # Plot without forecasting intervals
     p1 <- ggplot(d_comb, aes(x = Day)) +
@@ -43,13 +50,16 @@ make_plots <- function(forecast = NULL,
     
   } else {
     # Create a tibble containing time, actuals, forecasts and intervals
-    fcasts <- tibble(Day = c(1:nrow(visitors), nrow(visitors) + 1:h),
-                     Data = c(visitors$amount, rep(NA, h)),
-                     Forecast = c(rep(NA, nrow(visitors)), forecast$mean),
-                     lwr80 = c(rep(NA, nrow(visitors)), forecast$lower[, 1]),
-                     lwr95 = c(rep(NA, nrow(visitors)), forecast$lower[, 2]),
-                     upr80 = c(rep(NA, nrow(visitors)), forecast$upper[, 1]),
-                     upr95 = c(rep(NA, nrow(visitors)), forecast$upper[, 2]))
+    fcasts <- tibble(Day = c(df$dates,
+                             seq.Date(last(df$dates) + months(1),
+                                      to = last(df$dates) + months(h),
+                                      by = "months")),
+                     Data = c(visitors, rep(NA, h)),
+                     Forecast = c(rep(NA, n_obs), forecast$mean),
+                     lwr80 = c(rep(NA, n_obs), forecast$lower[, 1]),
+                     lwr95 = c(rep(NA, n_obs), forecast$lower[, 2]),
+                     upr80 = c(rep(NA, n_obs), forecast$upper[, 1]),
+                     upr95 = c(rep(NA, n_obs), forecast$upper[, 2]))
     
     p1 <- ggplot(fcasts, aes(x = Day, y = Data)) +
       geom_line() +

@@ -3,7 +3,6 @@ library(dplyr)
 library(fable)
 library(plotly)
 library(ggplot2)
-library(tsibble)
 library(forecast)
 library(lubridate)
 
@@ -11,7 +10,7 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       # Slider which affects forecast horizon
-      sliderInput("h", "Forecast horizon", min = 1, max = 120, value = 60)
+      sliderInput("h", "Forecast horizon (months)", min = 1, max = 120, value = 24)
     ),
     mainPanel(
       tabsetPanel(
