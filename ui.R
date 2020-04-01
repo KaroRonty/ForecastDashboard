@@ -1,6 +1,7 @@
 library(shiny)
 library(dplyr)
 library(fable)
+library(plotly)
 library(ggplot2)
 library(tsibble)
 library(forecast)
@@ -18,13 +19,13 @@ ui <- fluidPage(
                  # 2x2 grid of graphs
                  fluidRow(
                    column(6,
-                          plotOutput("p_arima")),
+                          plotlyOutput("p_arima")),
                    column(6,
-                          plotOutput("p_ets")), #
+                          plotlyOutput("p_ets")), #
                    column(6,
-                          plotOutput("p_tbats")), #
+                          plotlyOutput("p_tbats")), #
                    column(6,
-                          plotOutput("p_comb")))
+                          plotlyOutput("p_comb")))
         )
       )
     )
