@@ -91,7 +91,7 @@ make_plots <- function(forecast = NULL,
     m_comb <- (f_arima$mean + f_ets$mean + f_tbats$mean) / 3
     
     # Make a tibble containing time, actuals and forecasts for plotting
-    d_comb <- tibble(Day = c(df$dates,
+    d_comb <- tibble(Date = c(df$dates,
                              seq.Date(last(df$dates) + months(1),
                                       to = last(df$dates) + months(h),
                                       by = "months")),
@@ -99,7 +99,7 @@ make_plots <- function(forecast = NULL,
                      Forecast = c(rep(NA, n_obs), m_comb))
     
     # Plot without forecasting intervals
-    p1 <- ggplot(d_comb, aes(x = Day)) +
+    p1 <- ggplot(d_comb, aes(x = Date)) +
       geom_line(aes(y = Data), color = "black") +
       geom_line(aes(y = Forecast), color = "#00BFC4") +
       ggtitle("Combination forecast") +
@@ -107,7 +107,7 @@ make_plots <- function(forecast = NULL,
     
   } else {
     # Create a tibble containing time, actuals, forecasts and intervals
-    fcasts <- tibble(Day = c(df$dates,
+    fcasts <- tibble(Date = c(df$dates,
                              seq.Date(last(df$dates) + months(1),
                                       to = last(df$dates) + months(h),
                                       by = "months")),
@@ -118,7 +118,7 @@ make_plots <- function(forecast = NULL,
                      upr80 = c(rep(NA, n_obs), forecast$upper[, 1]),
                      upr95 = c(rep(NA, n_obs), forecast$upper[, 2]))
     
-    p1 <- ggplot(fcasts, aes(x = Day, y = Data)) +
+    p1 <- ggplot(fcasts, aes(x = Date, y = Data)) +
       geom_line() +
         geom_ribbon(aes(ymin = lwr80, ymax = upr80), fill = eighty) +
         geom_ribbon(aes(ymin = lwr95, ymax = upr95), fill = ninetyfive,
@@ -162,8 +162,21 @@ server <- function(input, output, session){
     make_plots(combination = TRUE, h = input$h)
   })
   })
+  
+  compute_accuracies <- reactive({
+    if(input$test_set_accuracies == FALSE){
+      return(accuracies)
+    } else {
+      return(accuracies %>% filter(Set == "Test"))
+    }
+  })
+  
   # Accuracy metrics table
   output$metrics <- renderDT({
-    accuracies
+    compute_accuracies()
+  })
+  # Test set accuracies
+  observeEvent(input$test_set_accuracies, {
+    compute_accuracies()
   })
 }
