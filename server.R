@@ -103,6 +103,7 @@ make_plots <- function(forecast = NULL,
       geom_line(aes(y = Data), color = "black") +
       geom_line(aes(y = Forecast), color = "#00BFC4") +
       ggtitle("Combination forecast") +
+      scale_x_date(date_labels = "%Y") +
       theme_minimal()
     
   } else {
@@ -125,6 +126,7 @@ make_plots <- function(forecast = NULL,
                     alpha = 0.7) +
       geom_line(aes(y = Forecast), color = color) +
       ggtitle(paste(as.character(model))) +
+      scale_x_date(date_labels = "%Y") +
       theme_minimal()
     }
   
@@ -164,10 +166,10 @@ server <- function(input, output, session){
   })
   
   compute_accuracies <- reactive({
-    if(input$test_set_accuracies == FALSE){
-      return(accuracies)
+    if(input$training_set_accuracies == FALSE){
+      return(accuracies %>% arrange(MAPE) %>% filter(Set == "Test"))
     } else {
-      return(accuracies %>% filter(Set == "Test"))
+      return(accuracies %>% arrange(MAPE))
     }
   })
   
@@ -176,7 +178,7 @@ server <- function(input, output, session){
     compute_accuracies()
   })
   # Test set accuracies
-  observeEvent(input$test_set_accuracies, {
+  observeEvent(input$training_set_accuracies, {
     compute_accuracies()
   })
 }

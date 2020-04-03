@@ -12,7 +12,8 @@ ui <- fluidPage(
     sidebarPanel(
       # Slider which affects forecast horizon
       sliderInput("h", "Forecast horizon (months)", min = 1, max = 120, value = 24),
-      checkboxInput("test_set_accuracies", "Show only test set accuracies")
+      checkboxInput("test_set_accuracies",
+                    "Show only test set accuracies in the accuracy metrics")
     ),
     mainPanel(
       tabsetPanel(
