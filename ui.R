@@ -12,25 +12,20 @@ ui <- fluidPage(
     sidebarPanel(
       # Slider which affects forecast horizon
       sliderInput("h", "Forecast horizon (months)", min = 1, max = 120, value = 24),
-      checkboxInput("test_set_accuracies",
-                    "Show only test set accuracies in the accuracy metrics")
+      checkboxInput("training_set_accuracies",
+                    "Show also training set accuracies")
     ),
     mainPanel(
       tabsetPanel(
         tabPanel("Graphs",
                  # 2x2 grid of graphs
                  fluidRow(
-                   column(6,
-                          plotlyOutput("p_arima")),
-                   column(6,
-                          plotlyOutput("p_ets")), #
-                   column(6,
-                          plotlyOutput("p_tbats")), #
-                   column(6,
-                          plotlyOutput("p_comb")))
-                 ),
-        tabPanel("Accuracy metrics",
-                 DTOutput("metrics"))
+                   column(6, plotlyOutput("p_arima")),
+                   column(6, plotlyOutput("p_ets")),
+                   column(6, plotlyOutput("p_tbats")),
+                   column(6, plotlyOutput("p_comb")))
+        ),
+        tabPanel("Accuracy metrics", DTOutput("metrics"))
       )
     )
   )

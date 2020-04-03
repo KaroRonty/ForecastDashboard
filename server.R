@@ -7,6 +7,9 @@ library(ggplot2)
 library(forecast)
 library(lubridate)
 
+# Disable scientific notation for plotting
+options(scipen = 1e9)
+
 # Load the data and formate dates
 df <- read.csv("website_visitors.csv") %>% 
   mutate(dates = ymd(dates)) %>% 
@@ -32,7 +35,7 @@ visitors_training <- window(visitors, end = c(year(split_date),
 visitors_test <- window(visitors, start = c(year(split_date + months(1)),
                                             month(split_date + months(1))))
 
-# Make models using the training data
+# Make models and forecast using the training data
 c_arima <- auto.arima(visitors_training) %>%
   forecast(h = length(visitors_test))
 
@@ -182,3 +185,4 @@ server <- function(input, output, session){
     compute_accuracies()
   })
 }
+
