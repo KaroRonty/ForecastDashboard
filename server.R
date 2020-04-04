@@ -122,6 +122,7 @@ make_plots <- function(forecast = NULL,
                      upr80 = c(rep(NA, n_obs), forecast$upper[, 1]),
                      upr95 = c(rep(NA, n_obs), forecast$upper[, 2]))
     
+    # Plot with forecasting intervals
     p1 <- ggplot(fcasts, aes(x = Date, y = Data)) +
       geom_line() +
         geom_ribbon(aes(ymin = lwr80, ymax = upr80), fill = eighty) +
@@ -136,8 +137,43 @@ make_plots <- function(forecast = NULL,
   return(ggplotly(p1))
 }
 
+# Define color ramp function ranging from blue to red
+ramp <- colorRampPalette(c("#5A8AC6", "white", "#F8696B"))
+
+# Function for condinational formatting of the tables
+conditional_format <- function(df){
+  datatable(df) %>%
+    formatStyle(colnames(df)[3],
+                backgroundColor = styleInterval(
+                  quantile(df[, 3], probs = seq_len(nrow(na.omit(df[, 3]))) /
+                             (nrow(na.omit(df[, 3])) - 1) - 1 /
+                             (nrow(na.omit(df[, 3])) - 1),
+                           na.rm = TRUE), 
+                  ramp(nrow(na.omit(df[, 3])) + 1))) %>%
+    formatStyle(colnames(df)[4],
+                backgroundColor = styleInterval(
+                  quantile(df[, 4], probs = seq_len(nrow(na.omit(df[, 4]))) /
+                             (nrow(na.omit(df[, 4])) - 1) - 1 /
+                             (nrow(na.omit(df[, 4])) - 1),
+                           na.rm = TRUE), 
+                  ramp(nrow(na.omit(df[, 4])) + 1))) %>%
+    formatStyle(colnames(df)[5],
+                backgroundColor = styleInterval(
+                  quantile(df[, 5], probs = seq_len(nrow(na.omit(df[, 5]))) /
+                             (nrow(na.omit(df[, 5])) - 1) - 1 /
+                             (nrow(na.omit(df[, 5])) - 1),
+                           na.rm = TRUE),
+                  ramp(nrow(na.omit(df[, 5])) + 1))) %>%
+    formatStyle(colnames(df)[6],
+                backgroundColor = styleInterval(
+                  quantile(df[, 6], probs = seq_len(nrow(na.omit(df[, 6]))) /
+                             (nrow(na.omit(df[, 6])) - 1) - 1 /
+                             (nrow(na.omit(df[, 6])) - 1),
+                           na.rm = TRUE), 
+                  ramp(nrow(na.omit(df[, 6])) + 1)))
+}
+
 server <- function(input, output, session){
-  
   # ARIMA plot
   output$p_arima <- renderPlotly({
     # Make forecasts by getting h from slider
@@ -165,24 +201,31 @@ server <- function(input, output, session){
   # Combination plot
   observeEvent(input$h, {output$p_comb <- renderPlotly({
     make_plots(combination = TRUE, h = input$h)
-  })
+    })
   })
   
+  # Return the filtered or unfiltered accuracies and format as numbers
   compute_accuracies <- reactive({
     if(input$training_set_accuracies == FALSE){
-      return(accuracies %>% arrange(MAPE) %>% filter(Set == "Test"))
+      return(accuracies %>%
+               arrange(MAPE) %>%
+               filter(Set == "Test") %>% 
+               mutate_at(colnames(accuracies[, 3:6]), as.numeric))
     } else {
-      return(accuracies %>% arrange(MAPE))
+      return(accuracies %>%
+               arrange(MAPE) %>% 
+               mutate_at(colnames(accuracies[, 3:6]), as.numeric))
     }
   })
   
   # Accuracy metrics table
   output$metrics <- renderDT({
-    compute_accuracies()
+    compute_accuracies() %>% conditional_format()
   })
+  
   # Test set accuracies
   observeEvent(input$training_set_accuracies, {
-    compute_accuracies()
+    compute_accuracies() %>% conditional_format()
   })
 }
 
