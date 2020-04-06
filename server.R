@@ -210,11 +210,13 @@ server <- function(input, output, session){
       return(accuracies %>%
                arrange(MAPE) %>%
                filter(Set == "Test") %>% 
-               mutate_at(colnames(accuracies[, 3:6]), as.numeric))
+               mutate_at(colnames(accuracies[, 3:6]),
+                         function(x) suppressWarnings(as.numeric(x))))
     } else {
       return(accuracies %>%
                arrange(MAPE) %>% 
-               mutate_at(colnames(accuracies[, 3:6]), as.numeric))
+               mutate_at(colnames(accuracies[, 3:6]),
+                         function(x) suppressWarnings(as.numeric(x))))
     }
   })
   
@@ -228,4 +230,3 @@ server <- function(input, output, session){
     compute_accuracies() %>% conditional_format()
   })
 }
-
