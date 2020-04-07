@@ -140,36 +140,32 @@ make_plots <- function(forecast = NULL,
 # Define color ramp function ranging from blue to red
 ramp <- colorRampPalette(c("#5A8AC6", "white", "#F8696B"))
 
+# Function for getting the quantiles of each column
+get_q <- function(n, df){
+  quantile(df[, n], probs = seq_len(nrow(na.omit(df[, n]))) /
+             (nrow(na.omit(df[, n])) - 1) - 1 /
+             (nrow(na.omit(df[, n])) - 1),
+           na.rm = TRUE)
+}
+
 # Function for condinational formatting of the tables
 conditional_format <- function(df){
   datatable(df) %>%
     formatStyle(colnames(df)[3],
                 backgroundColor = styleInterval(
-                  quantile(df[, 3], probs = seq_len(nrow(na.omit(df[, 3]))) /
-                             (nrow(na.omit(df[, 3])) - 1) - 1 /
-                             (nrow(na.omit(df[, 3])) - 1),
-                           na.rm = TRUE), 
+                  get_q(3, df), 
                   ramp(nrow(na.omit(df[, 3])) + 1))) %>%
     formatStyle(colnames(df)[4],
                 backgroundColor = styleInterval(
-                  quantile(df[, 4], probs = seq_len(nrow(na.omit(df[, 4]))) /
-                             (nrow(na.omit(df[, 4])) - 1) - 1 /
-                             (nrow(na.omit(df[, 4])) - 1),
-                           na.rm = TRUE), 
+                 get_q(4, df), 
                   ramp(nrow(na.omit(df[, 4])) + 1))) %>%
     formatStyle(colnames(df)[5],
                 backgroundColor = styleInterval(
-                  quantile(df[, 5], probs = seq_len(nrow(na.omit(df[, 5]))) /
-                             (nrow(na.omit(df[, 5])) - 1) - 1 /
-                             (nrow(na.omit(df[, 5])) - 1),
-                           na.rm = TRUE),
+                  get_q(5, df),
                   ramp(nrow(na.omit(df[, 5])) + 1))) %>%
     formatStyle(colnames(df)[6],
                 backgroundColor = styleInterval(
-                  quantile(df[, 6], probs = seq_len(nrow(na.omit(df[, 6]))) /
-                             (nrow(na.omit(df[, 6])) - 1) - 1 /
-                             (nrow(na.omit(df[, 6])) - 1),
-                           na.rm = TRUE), 
+                  get_q(6, df), 
                   ramp(nrow(na.omit(df[, 6])) + 1)))
 }
 
